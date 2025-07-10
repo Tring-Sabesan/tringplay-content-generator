@@ -8,12 +8,16 @@ import ListItem from '@tiptap/extension-list-item';
 import OrderedList from '@tiptap/extension-ordered-list';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
-import Highlight from '@tiptap/extension-highlight';
 import FontFamily from '@tiptap/extension-font-family';
 import FontSize from 'tiptap-extension-font-size';
 import './RichEditor.css';
 import LightMode from '../assets/ic_light-mode.svg';
 import DarkMode from '../assets/ic_night_mode.svg';
+import {
+  ClearHighlightOnArrow,
+  CustomHighlight,
+} from '../extensions/highlight-extension';
+import Highlight from '@tiptap/extension-highlight';
 
 const FONT_FAMILIES = [
   { label: 'Arial', value: 'Arial' },
@@ -42,19 +46,22 @@ const RichEditor = () => {
       OrderedList,
       TextStyle,
       Color,
-      Highlight,
       FontFamily,
       FontSize,
+      CustomHighlight,
+      ClearHighlightOnArrow,
+      Highlight.configure({
+        multicolor: true,
+      }),
     ],
     content: `<h2>All great achievements require time.</h2><p>— Maya Angelou</p>`,
   });
 
-  // Helpers for color pickers
   const getCurrentColor = () =>
     editor?.getAttributes('textStyle').color || DEFAULT_TEXT_COLOR;
 
   const getCurrentHighlight = () =>
-    editor?.getAttributes('highlight').color || DEFAULT_HIGHLIGHT_COLOR;
+    editor?.getAttributes('highlight')?.color || null;
 
   const toggleTheme = () =>
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
@@ -76,17 +83,21 @@ const RichEditor = () => {
   };
 
   const setHighlight = (color: string) => {
-    editor?.chain().focus().toggleHighlight({ color }).run();
+    const currentColor = editor?.getAttributes('highlight').color;
+
+    if (currentColor === color) {
+      editor?.chain().focus().unsetMark('highlight').run();
+    } else {
+      editor?.chain().focus().setMark('highlight', { color }).run();
+    }
   };
 
   const handleLink = () => {
     let url = prompt('Enter URL');
-
     if (url) {
       if (!/^https?:\/\//i.test(url)) {
         url = 'https://' + url;
       }
-
       editor
         ?.chain()
         .focus()
@@ -96,7 +107,6 @@ const RichEditor = () => {
     }
   };
 
-  // Themed HTML export
   const downloadHTML = () => {
     const contentHTML = editor?.getHTML() || '';
     const fullHTML = `<!DOCTYPE html>
@@ -220,40 +230,32 @@ const RichEditor = () => {
               />
             </button>
           </div>
-
           <div className='color-picker-wrapper'>
             <button className='icon-btn' title='Highlight'>
               🖍
               <input
                 type='color'
-                value={getCurrentHighlight()}
+                value={getCurrentHighlight() || DEFAULT_HIGHLIGHT_COLOR}
                 onChange={(e) => setHighlight(e.target.value)}
                 className='color-input-overlay'
               />
             </button>
           </div>
-
           <button onClick={handleLink} title='Add/Edit Link'>
-            <span role='img' aria-label='link' style={{ opacity: 0.5 }}>
-              🔗
-            </span>
+            🔗
           </button>
           <button onClick={toggleTheme} title='Toggle Theme'>
-            <span role='img' aria-label='theme'>
-              {theme === 'light' ? (
-                <img src={DarkMode} />
-              ) : (
-                <img src={LightMode} />
-              )}
-            </span>
+            {theme === 'light' ? (
+              <img src={DarkMode} />
+            ) : (
+              <img src={LightMode} />
+            )}
           </button>
           <button
             onClick={downloadHTML}
             title='Download HTML'
             className='save-btn'>
-            <span role='img' aria-label='save'>
-              💾
-            </span>
+            💾
           </button>
         </div>
         <div className='editor-container'>
