@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://Tring-Sabesan.github.io/html-generator",
+  "homepage": "https://Tring-Sabesan.github.io/tringplay-content-generator",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
